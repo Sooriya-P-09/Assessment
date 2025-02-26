@@ -1,11 +1,20 @@
 import streamlit as st
 import pandas as pd
 
+def read_file(file):
+    """Read the file based on its extension."""
+    if file.name.endswith('.xlsx'):
+        return pd.read_excel(file, engine='openpyxl')
+    elif file.name.endswith('.xls'):
+        return pd.read_excel(file, engine='xlrd')
+    else:
+        return pd.read_csv(file)
+
 def merge_files(file1, file2, file3, selected_columns):
-    # Read files (supporting multiple formats)
-    df1 = pd.read_excel(file1) if file1.name.endswith('.xls') or file1.name.endswith('.xlsx') else pd.read_csv(file1)
-    df2 = pd.read_excel(file2) if file2.name.endswith('.xls') or file2.name.endswith('.xlsx') else pd.read_csv(file2)
-    df3 = pd.read_excel(file3) if file3.name.endswith('.xls') or file3.name.endswith('.xlsx') else pd.read_csv(file3)
+    # Read files (supports multiple formats)
+    df1 = read_file(file1)
+    df2 = read_file(file2)
+    df3 = read_file(file3)
     
     # Merge files based on common 'Employee ID'
     merged_df = df1.merge(df3, on='Employee ID', how='left').merge(df2, on='Employee ID', how='left')
@@ -44,6 +53,7 @@ def merge_files(file1, file2, file3, selected_columns):
     
     return final_df
 
+# Streamlit UI
 st.title("File Merger & Pivot Tool")
 
 uploaded_files = st.file_uploader("Upload 3 files", accept_multiple_files=True, type=["csv", "xls", "xlsx"])
@@ -52,9 +62,9 @@ if uploaded_files and len(uploaded_files) == 3:
     file1, file2, file3 = uploaded_files
     
     # Read all columns from the three files
-    df1 = pd.read_excel(file1) if file1.name.endswith('.xls') or file1.name.endswith('.xlsx') else pd.read_csv(file1)
-    df2 = pd.read_excel(file2) if file2.name.endswith('.xls') or file2.name.endswith('.xlsx') else pd.read_csv(file2)
-    df3 = pd.read_excel(file3) if file3.name.endswith('.xls') or file3.name.endswith('.xlsx') else pd.read_csv(file3)
+    df1 = read_file(file1)
+    df2 = read_file(file2)
+    df3 = read_file(file3)
     
     all_columns = list(set(df1.columns.tolist() + df2.columns.tolist() + df3.columns.tolist()))
     
