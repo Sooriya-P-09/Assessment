@@ -1,6 +1,14 @@
 import streamlit as st
 import pandas as pd
 
+# Check if openpyxl is installed
+try:
+    import openpyxl
+except ImportError:
+    st.error("The 'openpyxl' library is required to read and write Excel files. Please install it using the following command:")
+    st.code("pip install openpyxl")
+    st.stop()
+
 def merge_files(file1, file2, file3, selected_columns):
     # Read files (supporting multiple formats)
     df1 = pd.read_excel(file1) if file1.name.endswith('.xls') or file1.name.endswith('.xlsx') else pd.read_csv(file1)
