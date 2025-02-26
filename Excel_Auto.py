@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import openpyxl
 
 def read_file(file):
     """Read the file based on its extension."""
