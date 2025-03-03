@@ -1,7 +1,5 @@
-pip install openpyxl
 import streamlit as st
 import pandas as pd
-import openpyxl
 
 def merge_files(file1, file2, file3, selected_columns):
     # Read files (supporting multiple formats)
