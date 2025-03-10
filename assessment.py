@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import pickle
 import json
-import google.generativeai as genai
 import os
 
 # Set your Gemini API Key directly
