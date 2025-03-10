@@ -3,9 +3,8 @@ import pandas as pd
 import pickle
 import json
 import os
-import google.generativeai as genai  # <-- Add this line
-
 # Set your Gemini API Key directly
+genai=google.generativeai
 API_KEY = st.secrets["API_KEY"] # Replace with your actual Gemini API key
 genai.configure(api_key=API_KEY)
 
