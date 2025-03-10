@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 import pickle
 import json
-import google.generativeai as genai
+import google.generativeai
 
 # ✅ Load API Key from Streamlit Secrets
 API_KEY = st.secrets["API_KEY"]  # Ensure it's set in .streamlit/secrets.toml
-genai.configure(api_key=API_KEY)
+google.generativeai.configure(api_key=API_KEY)
 
 # ✅ Validate User Login
 def validate_user(user_id):
