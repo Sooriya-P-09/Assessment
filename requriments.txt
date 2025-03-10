@@ -1,6 +1,4 @@
 streamlit
 pandas
-os
-google.generativeai
-json
 pickle
+google-generativeai
