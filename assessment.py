@@ -2,76 +2,46 @@ import streamlit as st
 import pandas as pd
 import pickle
 import json
-import os
-import google.generativeai
-# Set your Gemini API Key directly
-genai=google.generativeai
-API_KEY = st.secrets["API_KEY"] # Replace with your actual Gemini API key
+import google.generativeai as genai
+
+# ✅ Load API Key from Streamlit Secrets
+API_KEY = st.secrets["API_KEY"]  # Ensure it's set in .streamlit/secrets.toml
 genai.configure(api_key=API_KEY)
 
-# Validate user login
+# ✅ Validate User Login
 def validate_user(user_id):
     return "@agilisium" in user_id
 
-# Generate a coding question using Gemini
+# ✅ Generate Coding Question
 def generate_question(prompt):
     try:
-        # Structured prompt with clear instructions
         structured_prompt = (
-            f"Generate a Python coding question based on the topic: '{prompt}'. "
-            "Your response must be a JSON object with the following keys: "
-            "'question', 'sample_input', and 'expected_output'. "
-            "Return only the JSON object, without any additional text or explanations. "
-            "Example Output: "
-            '{"question": "Write a function to find the factorial of a number.", '
-            '"sample_input": "5", "expected_output": "120"}'
+            f"Generate a Python coding question based on: '{prompt}'. "
+            "Your response must be a JSON object with keys: 'question', 'sample_input', 'expected_output'. "
+            "Return only the JSON, nothing else."
         )
-
-        # Use Gemini to generate the question
         model = genai.GenerativeModel('gemini-1.5-pro-001')
         response = model.generate_content(structured_prompt)
-
-        # Extract raw text response
         generated_text = response.text.strip()
 
-        # Debugging Output
-        print("Raw AI Response:", generated_text)
-
-        # Clean response to extract JSON
+        # 🔍 Extract JSON from Response
         json_start = generated_text.find("{")
         json_end = generated_text.rfind("}") + 1
-
         if json_start == -1 or json_end == -1:
-            print("Error: No JSON object found in the response.")
-            return "Error: No JSON object found in the response."
+            return "Error: No JSON object found in AI response."
 
         cleaned_text = generated_text[json_start:json_end]
+        generated_data = json.loads(cleaned_text)
 
-        # Debugging Output
-        print("Cleaned Response:", cleaned_text)
-
-        # Parse JSON response
-        try:
-            generated_data = json.loads(cleaned_text)
-            question = generated_data.get("question", "").strip()
-            sample_input = generated_data.get("sample_input", "").strip()
-            sample_output = generated_data.get("expected_output", "").strip()
-
-            if question and sample_input and sample_output:
-                return question, sample_input, sample_output
-            else:
-                print("Error: AI response is missing required fields.")
-                return "Error: AI response is missing required fields."
-
-        except json.JSONDecodeError as e:
-            print(f"JSON Parsing Error: {e}")
-            return f"Error: Failed to parse AI response as JSON. Response: {cleaned_text}"
-
+        return (
+            generated_data.get("question", ""),
+            generated_data.get("sample_input", ""),
+            generated_data.get("expected_output", ""),
+        )
     except Exception as e:
-        print(f"API Error: {e}")
         return f"API Error: {e}"
 
-# Save and Load Questions
+# ✅ Save and Load Questions
 def save_questions():
     with open("session_questions.pkl", "wb") as f:
         pickle.dump(st.session_state["questions"], f)
@@ -83,52 +53,51 @@ def load_questions():
     except FileNotFoundError:
         return []
 
-# Admin Dashboard
+# ✅ Admin Dashboard
 def admin_dashboard():
     st.header("Admin Dashboard")
 
     if "questions" not in st.session_state:
         st.session_state["questions"] = []
 
-    # Set candidate password
-    common_password = st.text_input("Set Common Candidate Password", type="password")
+    # Candidate Password Setup
+    common_password = st.text_input("Set Candidate Password", type="password")
     if st.button("Save Password"):
         with open("candidate_password.txt", "w") as f:
             f.write(common_password)
-        st.success("Common Password Saved Successfully")
+        st.success("Password Saved")
 
-    # Question Generation Section
+    # Question Generation
     st.subheader("Create Questions")
-    prompt = st.text_area("Enter a prompt to generate a question")
+    prompt = st.text_area("Enter a prompt")
 
     if st.button("Generate Question"):
         if prompt:
             result = generate_question(prompt)
-            if isinstance(result, tuple) and len(result) == 3:
-                question, sample_input, sample_output = result
-                st.session_state["questions"].append((question, sample_input, sample_output))
+            if isinstance(result, tuple):
+                st.session_state["questions"].append(result)
                 save_questions()
-                st.success("New Question Generated and Saved Successfully")
+                st.success("Question Generated & Saved")
             else:
-                st.error(result)  # Show the error message returned by generate_question
+                st.error(result)
 
-    # Show saved questions
+    # Show Questions
     if st.session_state["questions"]:
         st.subheader("Existing Questions")
         for i, (question, sample_input, sample_output) in enumerate(st.session_state["questions"], 1):
-            st.write(f"**Question {i}:** {question}")
+            st.write(f"**Q{i}:** {question}")
             st.text(f"Sample Input: {sample_input}")
             st.text(f"Expected Output: {sample_output}")
 
-# Candidate Dashboard
+# ✅ Candidate Dashboard
 def candidate_page():
     st.header("Candidate Dashboard")
 
-    if "questions" not in st.session_state or not st.session_state["questions"]:
+    if "questions" not in st.session_state:
         st.session_state["questions"] = load_questions()
 
     if not st.session_state["questions"]:
-        st.warning("No new questions available. Please wait for the admin to add questions.")
+        st.warning("No questions available.")
     else:
         for index, (question, sample_input, sample_output) in enumerate(st.session_state["questions"]):
             st.subheader(f"Question {index + 1}")
@@ -136,26 +105,26 @@ def candidate_page():
             st.text(f"Sample Input: {sample_input}")
             st.text(f"Expected Output: {sample_output}")
 
-            code = st.text_area(f"Write your code for Question {index + 1}", key=f"code_{index}")
+            # ✅ Store User Code in Session State
+            if f"code_{index}" not in st.session_state:
+                st.session_state[f"code_{index}"] = ""
+
+            user_code = st.text_area(f"Write your code for Q{index + 1}", value=st.session_state[f"code_{index}"], key=f"code_{index}")
 
             if st.button(f"Run Code {index + 1}"):
                 try:
-                    # Execute user code safely
                     local_vars = {}
-                    exec(code, {}, local_vars)
-
-                    # Convert output to string for comparison
+                    exec(user_code, {}, local_vars)  # **Security Risk!**
                     output = str(local_vars.get("output", "")).strip()
-                    expected_output = sample_output.strip()
 
-                    if output == expected_output:
-                        st.success("Correct Output! Your code worked.")
+                    if output == sample_output.strip():
+                        st.success("✅ Correct Output!")
                     else:
-                        st.error(f"Incorrect Output! Expected: {expected_output}, Got: {output}")
+                        st.error(f"❌ Incorrect! Expected: {sample_output}, Got: {output}")
                 except Exception as e:
-                    st.error(f"Error running code: {e}")
+                    st.error(f"Error: {e}")
 
-# Main Function: Login & Navigation
+# ✅ Main: Login & Navigation
 def main():
     st.title("Login Page")
 
@@ -163,7 +132,7 @@ def main():
         st.session_state["logged_in"] = False
 
     if not st.session_state["logged_in"]:
-        user_type = st.selectbox("Select User Type", ["Admin", "Candidate"])
+        user_type = st.selectbox("User Type", ["Admin", "Candidate"])
         user_id = st.text_input("User ID")
         password = st.text_input("Password", type="password")
 
@@ -187,7 +156,7 @@ def main():
                         else:
                             st.error("Incorrect Candidate Password")
                     except FileNotFoundError:
-                        st.error("Candidate Password Not Set by Admin")
+                        st.error("Candidate Password Not Set")
 
     if st.session_state["logged_in"]:
         if st.session_state["user_type"] == "Admin":
