@@ -8,7 +8,7 @@ import sys
 from streamlit_ace import st_ace  # Streamlit code editor
 
 # Set your Gemini API Key
-API_KEY = "YOUR_GEMINI_API_KEY"  # Replace with your actual API key
+API_KEY = st.secrets["API_KEY"]  # Replace with your actual API key
 genai.configure(api_key=API_KEY)
 
 # Validate user login
