@@ -1,6 +1,5 @@
 streamlit
 streamlit-ace
 google-generativeai
-pickle
-json
-os
+pickle5
+json5
