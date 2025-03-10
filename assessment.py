@@ -6,7 +6,7 @@ import google.generativeai as genai
 import os
 
 # Set your Gemini API Key directly
-API_KEY = "AIzaSyBQfLJS0_n654I-7B17xsahcEwVofe3JOE"  # Replace with your actual Gemini API key
+API_KEY = st.secrets["API_KEY"] # Replace with your actual Gemini API key
 genai.configure(api_key=API_KEY)
 
 # Validate user login
